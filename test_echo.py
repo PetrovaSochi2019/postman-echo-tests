@@ -26,7 +26,7 @@ def session():
 
 
 def test_get_query_params_are_echoed(session):
-    """GET /get: одиночный и повторяющийся квери-параметры возвращаются в args."""
+    """GET /get: одиночный и повторяющийся параметры попадают в args."""
     params = {"foo": "bar", "lang": "ru", "x": ["1", "2"]}
 
     response = session.get(GET_URL, params=params, timeout=TIMEOUT)
@@ -44,7 +44,7 @@ def test_get_query_params_are_echoed(session):
 
 
 def test_get_echoes_custom_headers(session):
-    """GET /get: пользовательские заголовки возвращаются в headers в нижнем регистре.
+    """GET /get: заголовки возвращаются в headers в нижнем регистре.
 
     Внимание: заголовок X-Request-Id съедается edge-прокси сервиса и в эхо не
     попадает — проверяем на заголовках, которые сервис действительно отражает.
@@ -64,7 +64,7 @@ def test_get_echoes_custom_headers(session):
 
 
 def test_post_form_urlencoded(session):
-    """POST /post с form-data: тело попадает в form, data остаётся пустой строкой."""
+    """POST /post с form-data: тело в form, data — пустая строка."""
     payload = {"login": "user", "password": "secret"}
 
     response = session.post(POST_URL, data=payload, timeout=TIMEOUT)
@@ -75,7 +75,10 @@ def test_post_form_urlencoded(session):
     assert body["data"] == ""
     assert body["files"] == {}
     assert body["args"] == {}
-    assert body["headers"]["content-type"] == "application/x-www-form-urlencoded"
+    assert (
+        body["headers"]["content-type"]
+        == "application/x-www-form-urlencoded"
+    )
 
 
 def test_post_json_body(session):
@@ -112,7 +115,7 @@ def test_post_raw_text_body(session):
 
 
 def test_post_multipart_file_upload(session):
-    """POST /post с multipart: имя файла попадает в files, обычные поля — в form."""
+    """POST /post с multipart: файл в files, обычное поле — в form."""
     files = {"report": ("report.txt", b"line1\nline2", "text/plain")}
 
     response = session.post(
@@ -123,11 +126,13 @@ def test_post_multipart_file_upload(session):
     body = response.json()
     assert "report.txt" in body["files"]
     assert body["form"]["comment"] == "upload"
-    assert body["headers"]["content-type"].startswith("multipart/form-data; boundary=")
+    assert body["headers"]["content-type"].startswith(
+        "multipart/form-data; boundary="
+    )
 
 
 def test_post_url_accepts_query_params_too(session):
-    """POST /post: квери-параметры и тело отражаются одновременно и независимо."""
+    """POST /post: параметры и тело отражаются независимо друг от друга."""
     response = session.post(
         POST_URL,
         params={"source": "ci"},
